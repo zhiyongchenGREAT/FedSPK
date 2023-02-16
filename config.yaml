@@ -1,0 +1,56 @@
+global_config:
+  seed: 5959
+  device: "cuda"
+  is_mp: False
+  "evaluate": False
+---
+data_config:
+  data_path: "./data/"
+  dataset_name: "MNIST"
+  num_shards: 200
+  iid: False
+
+  fl_dataset_path: "/workspace/flearn_data"
+---
+fed_config:
+  C: 0.6
+  K: 12
+  R: 500
+  E: 1
+  B: 10
+  criterion: torch.nn.CrossEntropyLoss
+  optimizer: torch.optim.SGD
+---
+optim_config:
+  lr: 0.01
+  momentum: 0.9
+---
+init_config:
+  init_type: "xavier"
+  init_gain: 1.0
+  gpu_ids: [0, 1, 2]
+  "speaker_init_model": "/nvme1/zhiyong/ASV_LOGS_202102/train_logs_201120/xvector(vox2)/model/model000000134.model"
+---
+model_config: 
+  #name: TwoNN
+  #in_features: 784
+  #num_hiddens: 200
+  #num_classes: 10
+  
+  name: CNN
+  in_channels: 1
+  hidden_channels: 32
+  num_hiddens: 512
+  num_classes: 10
+---
+log_config:
+  log_path: "./log/"
+  log_name:  "FL.log"
+  tb_port: 5252
+  tb_host: "0.0.0.0"
+---
+eval_config:
+  eval_task: "ver"
+  testfile_path: "/workspace/flearn_data"
+  model_path: "/nvme1/zhiyong/ASV_LOGS_202102/train_logs_201120/xvector(vox2)/model/model000000134.model"
+  listfilename: "/workspace/flearn_data/ver_list_G12_VER.txt"
