@@ -8,7 +8,7 @@ import numpy, math, pdb, sys, random
 import time, os, itertools, shutil, importlib
 # from tuneThreshold import tuneThresholdfromScore
 from .DatasetLoader import loadWAV
-from .softmax import LossFunction
+from .softmax import LossFunction, LossFunction_with_transformer
 from .X_vector import MainModel
 
 from torch.cuda.amp import autocast, GradScaler
@@ -28,18 +28,19 @@ class WrappedModel(nn.Module):
 class SpeakerNet(nn.Module):
 
     def __init__(self, model, trainfunc, nPerSpeaker, Syncbatch, n_mels, nOut, spec_aug, 
-                nClasses, **kwargs):
+                nClasses, additional_model=False, **kwargs):
         super(SpeakerNet, self).__init__()
 
         # SpeakerNetModel = importlib.import_module(model).__getattribute__('MainModel')
         self.__S__ = MainModel(n_mels, nOut, spec_aug, **kwargs)
-        if Syncbatch:
-            self.__S__ = nn.SyncBatchNorm.convert_sync_batchnorm(self.__S__)
+
 
         # LossFunction = importlib.import_module(trainfunc).__getattribute__('LossFunction')
-        self.__L__ = LossFunction(nOut, nClasses, **kwargs)
-        if Syncbatch:
-            self.__L__ = nn.SyncBatchNorm.convert_sync_batchnorm(self.__L__)
+        if additional_model:
+            self.__L__ = LossFunction_with_transformer(nOut, nClasses, **kwargs)
+        else:
+            self.__L__ = LossFunction(nOut, nClasses, **kwargs)
+
 
         self.nPerSpeaker = nPerSpeaker
 

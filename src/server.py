@@ -58,16 +58,19 @@ class Server(object):
         self.writer = writer
 
         # self.model = eval(model_config["name"])(**model_config)
-        self.model = SpeakerNet(model='X_vector', trainfunc='softmax', nPerSpeaker=1, Syncbatch=False, n_mels=40, nOut=192, spec_aug=False, nClasses=5994)
+        if model_config["use_additional_model"]:
+            self.model = SpeakerNet(model='X_vector', trainfunc='softmax', nPerSpeaker=1, Syncbatch=False, n_mels=40, nOut=192, spec_aug=False, nClasses=5994, additional_model=True)
+        else:
+            self.model = SpeakerNet(model='X_vector', trainfunc='softmax', nPerSpeaker=1, Syncbatch=False, n_mels=40, nOut=192, spec_aug=False, nClasses=5994)
         
         self.seed = global_config["seed"]
         self.device = global_config["device"]
         self.mp_flag = global_config["is_mp"]
 
-        self.data_path = data_config["data_path"]
-        self.dataset_name = data_config["dataset_name"]
-        self.num_shards = data_config["num_shards"]
-        self.iid = data_config["iid"]
+        # self.data_path = data_config["data_path"]
+        # self.dataset_name = data_config["dataset_name"]
+        # self.num_shards = data_config["num_shards"]
+        # self.iid = data_config["iid"]
 
         self.init_config = init_config
 

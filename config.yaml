@@ -5,10 +5,10 @@ global_config:
   "evaluate": False
 ---
 data_config:
-  data_path: "./data/"
-  dataset_name: "MNIST"
-  num_shards: 200
-  iid: False
+  # data_path: "./data/"
+  # dataset_name: "MNIST"
+  # num_shards: 200
+  # iid: False
 
   fl_dataset_path: "/workspace/flearn_data"
 ---
@@ -42,9 +42,10 @@ model_config:
   hidden_channels: 32
   num_hiddens: 512
   num_classes: 10
+  use_additional_model: True
 ---
 log_config:
-  log_path: "./log/"
+  log_path: "../FL_log/"
   log_name:  "FL.log"
   tb_port: 5252
   tb_host: "0.0.0.0"
