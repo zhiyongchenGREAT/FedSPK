@@ -28,15 +28,16 @@ class WrappedModel(nn.Module):
 class SpeakerNet(nn.Module):
 
     def __init__(self, model, trainfunc, nPerSpeaker, Syncbatch, n_mels, nOut, spec_aug, 
-                nClasses, additional_model=False, **kwargs):
+                nClasses, additional_model, **kwargs):
         super(SpeakerNet, self).__init__()
 
         # SpeakerNetModel = importlib.import_module(model).__getattribute__('MainModel')
         self.__S__ = MainModel(n_mels, nOut, spec_aug, **kwargs)
+        self.additional_model = additional_model
 
 
         # LossFunction = importlib.import_module(trainfunc).__getattribute__('LossFunction')
-        if additional_model:
+        if self.additional_model[0]:
             self.__L__ = LossFunction_with_transformer(nOut, nClasses, **kwargs)
         else:
             self.__L__ = LossFunction(nOut, nClasses, **kwargs)
@@ -50,10 +51,13 @@ class SpeakerNet(nn.Module):
         outp    = self.__S__.forward(data)
 
         if label == None:
+            if self.additional_model[0]:
+                if self.additional_model[1]:
+                    outp  = outp.reshape(self.nPerSpeaker,-1,outp.size()[-1]).transpose(1,0).squeeze(1)
+                    outp = self.__L__.forward(outp)
             return outp
 
         else:
-
             outp    = outp.reshape(self.nPerSpeaker,-1,outp.size()[-1]).transpose(1,0).squeeze(1)
 
             nloss, prec1 = self.__L__.forward(outp, label)

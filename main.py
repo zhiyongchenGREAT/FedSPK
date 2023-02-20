@@ -6,6 +6,8 @@ import yaml
 import threading
 import logging
 
+import wandb
+
 import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
 
@@ -14,6 +16,8 @@ from src.utils import launch_tensor_board
 
 
 if __name__ == "__main__":
+    # GPU setting
+    
     # read configuration file
     with open('./config.yaml') as c:
         configs = list(yaml.load_all(c, Loader=yaml.FullLoader))
@@ -26,10 +30,15 @@ if __name__ == "__main__":
     log_config = configs[6]["log_config"]
     eval_config = configs[7]["eval_config"]
 
+    os.environ["CUDA_VISIBLE_DEVICES"] = global_config["use_GPU"]
+
     # modify dataset path for FL
     data_config["multi_dataset_files"] = [os.path.join(data_config["fl_dataset_path"],
         "train_list_G%d.txt"%(i+1)) for i in range(fed_config["K"])]
     data_config["multi_train_paths"] = [''] * fed_config["K"]
+
+    # setup group evaluation
+    eval_config["group_listfilenames"] = [os.path.join(data_config["fl_dataset_path"], "ver_list_G%d_VER.txt"%(i+1)) for i in range(eval_config["group_size"])]
 
     # modify log_path to contain current time
     log_config["log_path"] = os.path.join(log_config["log_path"], str(datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")))
@@ -58,8 +67,20 @@ if __name__ == "__main__":
         print(config); logging.info(config)
     print()
 
+    # stack configs into a single dictionary
+    configs_wandb = {**global_config, **data_config, **fed_config, **optim_config, **init_config, **model_config, **log_config, **eval_config}
+
+    wandb.init(
+        # set the wandb project where this run will be logged
+        project="FedSPK",
+        notes=global_config["notes"],
+        tags=global_config["tags"],        
+        # track hyperparameters and run metadata
+        config=configs_wandb
+    )
+
     # initialize federated learning 
-    central_server = Server(writer, model_config, global_config, data_config, init_config, fed_config, optim_config)
+    central_server = Server(writer, model_config, global_config, data_config, init_config, fed_config, optim_config, eval_config)
     
     if global_config["evaluate"]:
         central_server.evaluate_global_model(task=eval_config["eval_task"], model_path=eval_config["model_path"], listfilename=eval_config["listfilename"], testfile_path=eval_config["testfile_path"])

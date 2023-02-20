@@ -57,10 +57,14 @@ class LossFunction_with_transformer(nn.Module):
         
     def forward(self, x, label=None):
 
-        x = self.transformer_encoder(x)
-        x = self.fc(x)
+        trans_out = self.transformer_encoder(x)
+
+        if label == None:
+            return trans_out
+
+        x = self.fc(trans_out)
         
-        nloss   = self.criterion(x, label)
+        nloss  = self.criterion(x, label)
         prec1	= accuracy(x.detach(), label.detach(), topk=(1,))[0]
 
         return nloss, prec1

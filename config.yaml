@@ -3,6 +3,9 @@ global_config:
   device: "cuda"
   is_mp: False
   "evaluate": False
+  "use_GPU": "2"
+  "notes": "PFL test"
+  "tags": ["experimental"]
 ---
 data_config:
   # data_path: "./data/"
@@ -42,7 +45,7 @@ model_config:
   hidden_channels: 32
   num_hiddens: 512
   num_classes: 10
-  use_additional_model: True
+  use_additional_model: [True, True] # [use additional model, use additional model output embedding]
 ---
 log_config:
   log_path: "../FL_log/"
@@ -55,3 +58,7 @@ eval_config:
   testfile_path: "/workspace/flearn_data"
   model_path: "/nvme1/zhiyong/ASV_LOGS_202102/train_logs_201120/xvector(vox2)/model/model000000134.model"
   listfilename: "/workspace/flearn_data/ver_list_G12_VER.txt"
+  
+  group_listfilenames: ""
+  group_size: 12
+  eval_interval: 10

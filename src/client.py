@@ -3,6 +3,8 @@ import pickle
 import logging
 import sys
 
+import wandb
+
 import torch
 import torch.nn as nn
 
@@ -100,6 +102,8 @@ class Client(object):
                 counter += 1
                 sys.stdout.write("Loss %f \r"%(loss_total/counter))
                 sys.stdout.flush()
+
+                wandb.log({"C%dloss"%self.id: loss})
 
                 if self.device == "cuda": torch.cuda.empty_cache()
 

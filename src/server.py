@@ -6,6 +6,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+import wandb
+
 from multiprocessing import pool, cpu_count
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
@@ -52,16 +54,15 @@ class Server(object):
         optimizer: torch.optim instance for updating parameters.
         optim_config: Kwargs provided for optimizer.
     """
-    def __init__(self, writer, model_config={}, global_config={}, data_config={}, init_config={}, fed_config={}, optim_config={}):
+    def __init__(self, writer, model_config={}, global_config={}, data_config={}, init_config={}, fed_config={}, optim_config={}, eval_config={}):
         self.clients = None
         self._round = 0
         self.writer = writer
 
         # self.model = eval(model_config["name"])(**model_config)
-        if model_config["use_additional_model"]:
-            self.model = SpeakerNet(model='X_vector', trainfunc='softmax', nPerSpeaker=1, Syncbatch=False, n_mels=40, nOut=192, spec_aug=False, nClasses=5994, additional_model=True)
-        else:
-            self.model = SpeakerNet(model='X_vector', trainfunc='softmax', nPerSpeaker=1, Syncbatch=False, n_mels=40, nOut=192, spec_aug=False, nClasses=5994)
+        self.model_config = model_config
+
+        self.model = SpeakerNet(model='X_vector', trainfunc='softmax', nPerSpeaker=1, Syncbatch=False, n_mels=40, nOut=192, spec_aug=False, nClasses=5994, additional_model=model_config["use_additional_model"])
         
         self.seed = global_config["seed"]
         self.device = global_config["device"]
@@ -88,6 +89,11 @@ class Server(object):
         self.multi_train_paths = data_config["multi_train_paths"]
 
         self.speaker_init_model = init_config["speaker_init_model"]
+
+        self.task = eval_config["eval_task"]
+        self.group_listfilenames = eval_config["group_listfilenames"]
+        self.testfile_path = eval_config["testfile_path"]
+        self.eval_interval = eval_config["eval_interval"]
 
     def setup(self, **init_kwargs):
         """Set up all configuration for federated learning."""
@@ -367,10 +373,10 @@ class Server(object):
     #     # evaluate the selected client
 
 
-    def mp_evaluate_selected_models(self, selected_index):
-        """Multiprocessing-applied version of "evaluate_selected_models" method."""
-        self.clients[selected_index].client_evaluate()
-        return True
+    # def mp_evaluate_selected_models(self, selected_index):
+    #     """Multiprocessing-applied version of "evaluate_selected_models" method."""
+    #     self.clients[selected_index].client_evaluate()
+    #     return True
 
     def train_federated_model(self):
         """Do federated training."""
@@ -490,7 +496,7 @@ class Server(object):
 
             self_state[name].copy_(param)
 
-    def evaluateFromList(self, model, listfilename, distance_m='cosine', print_interval=100, test_path='', num_eval=10, eval_frames=0, verbose=True):
+    def evaluateFromList(self, model, listfilename, distance_m='cosine', print_interval=100, test_path='', num_eval=10, eval_frames=0, verbose=True, group_id=99):
         assert distance_m in ['L2', 'cosine']
         if verbose:
             print('Distance metric: %s'%(distance_m))
@@ -585,6 +591,7 @@ class Server(object):
         result = tuneThresholdfromScore_std(all_scores, all_labels)
         print('')
         print('EER %2.4f MINC@0.01 %.5f MINC@0.001 %.5f'%(result[1], result[-2], result[-1]))
+        wandb.log({'G%dEER'%group_id: result[1], 'G%dMINC@0.01'%group_id: result[-2]})
 
     def evaluate_global_model(self, task, model_path, listfilename, testfile_path):
         if task == 'ver':
@@ -592,6 +599,17 @@ class Server(object):
             self.evaluateFromList(self.model, listfilename, test_path=testfile_path)
         else:
             raise ValueError('Unknown task: %s'%(task))
+
+    def groupevaluate_global_model(self, task, group_listfilenames, testfile_path):
+        if task == 'ver':
+            for group_id, listfilename in enumerate(group_listfilenames):
+                if self.model_config["use_additional_model"][1] == False:
+                    self.evaluateFromList(self.model, listfilename, test_path=testfile_path, group_id=group_id)
+                else:
+                    self.evaluateFromList(self.clients[group_id].model, listfilename, test_path=testfile_path, group_id=group_id)
+        else:
+            raise ValueError('Unknown task: %s'%(task))
+
 
     def fit(self):
         """Execute the whole process of the federated learning."""
@@ -635,6 +653,13 @@ class Server(object):
             self._round = r + 1
             
             self.train_federated_model_speaker()
+
+            # evaluate model
+            if self._round % self.eval_interval == 0:
+               
+                self.groupevaluate_global_model(self.task, self.group_listfilenames, self.testfile_path)
+
+
             # test_loss, test_accuracy = self.evaluate_global_model()
             
             # self.results['loss'].append(test_loss)
