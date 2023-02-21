@@ -4,7 +4,7 @@ global_config:
   is_mp: False
   "evaluate": False
   "use_GPU": "2"
-  "notes": "PFL test"
+  "notes": "FL test"
   "tags": ["experimental"]
 ---
 data_config:

@@ -648,6 +648,8 @@ class Server(object):
         # self.results = {"loss": [], "accuracy": []}
         # init speaker model with existing parameters
         self.loadParameters(self.model, self.speaker_init_model)
+
+        self.groupevaluate_global_model(self.task, self.group_listfilenames, self.testfile_path)
         
         for r in range(self.num_rounds):
             self._round = r + 1
