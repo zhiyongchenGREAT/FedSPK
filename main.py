@@ -76,7 +76,8 @@ if __name__ == "__main__":
         notes=global_config["notes"],
         tags=global_config["tags"],        
         # track hyperparameters and run metadata
-        config=configs_wandb
+        config=configs_wandb,
+        dir='/nvme/zhiyong/wandb'
     )
 
     # initialize federated learning 
