@@ -103,7 +103,7 @@ class Client(object):
                 sys.stdout.write("Loss %f \r"%(loss_total/counter))
                 sys.stdout.flush()
 
-                wandb.log({"C%dloss"%self.id: loss})
+                wandb.log({"C%dloss"%(self.id+1): loss})
 
                 if self.device == "cuda": torch.cuda.empty_cache()
 

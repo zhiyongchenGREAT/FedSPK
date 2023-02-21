@@ -4,7 +4,7 @@ global_config:
   is_mp: False
   "evaluate": False
   "use_GPU": "2"
-  "notes": "FL test"
+  "notes": "PFL test compact testing"
   "tags": ["experimental"]
 ---
 data_config:
@@ -16,9 +16,9 @@ data_config:
   fl_dataset_path: "/workspace/flearn_data"
 ---
 fed_config:
-  C: 0.6
+  C: 1.0
   K: 12
-  R: 500
+  R: 30
   E: 1
   B: 10
   criterion: torch.nn.CrossEntropyLoss
@@ -61,4 +61,4 @@ eval_config:
   
   group_listfilenames: ""
   group_size: 12
-  eval_interval: 10
+  eval_interval: 1

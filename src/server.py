@@ -54,10 +54,10 @@ class Server(object):
         optimizer: torch.optim instance for updating parameters.
         optim_config: Kwargs provided for optimizer.
     """
-    def __init__(self, writer, model_config={}, global_config={}, data_config={}, init_config={}, fed_config={}, optim_config={}, eval_config={}):
+    def __init__(self, model_config={}, global_config={}, data_config={}, init_config={}, fed_config={}, optim_config={}, eval_config={}):
         self.clients = None
         self._round = 0
-        self.writer = writer
+        # self.writer = writer
 
         # self.model = eval(model_config["name"])(**model_config)
         self.model_config = model_config
@@ -591,7 +591,7 @@ class Server(object):
         result = tuneThresholdfromScore_std(all_scores, all_labels)
         print('')
         print('EER %2.4f MINC@0.01 %.5f MINC@0.001 %.5f'%(result[1], result[-2], result[-1]))
-        wandb.log({'G%dEER'%group_id: result[1], 'G%dMINC@0.01'%group_id: result[-2]})
+        wandb.log({'G%dEER'%(group_id+1): result[1], 'G%dMINC@0.01'%(group_id+1): result[-2]})
 
     def evaluate_global_model(self, task, model_path, listfilename, testfile_path):
         if task == 'ver':

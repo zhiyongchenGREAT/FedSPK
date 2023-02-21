@@ -38,7 +38,8 @@ if __name__ == "__main__":
     data_config["multi_train_paths"] = [''] * fed_config["K"]
 
     # setup group evaluation
-    eval_config["group_listfilenames"] = [os.path.join(data_config["fl_dataset_path"], "ver_list_G%d_VER.txt"%(i+1)) for i in range(eval_config["group_size"])]
+    eval_config["group_listfilenames"] = [os.path.join(data_config["fl_dataset_path"], "ver_list_G%d_VER.txt"%(i+1)) for i in range(eval_config["group_size"]//2)] + \
+    [os.path.join(data_config["fl_dataset_path"], "ver_list_G%d_VER_simp.txt"%(i+1)) for i in range(eval_config["group_size"]//2, eval_config["group_size"])] 
 
     # modify log_path to contain current time
     log_config["log_path"] = os.path.join(log_config["log_path"], str(datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")))
@@ -81,7 +82,7 @@ if __name__ == "__main__":
     )
 
     # initialize federated learning 
-    central_server = Server(writer, model_config, global_config, data_config, init_config, fed_config, optim_config, eval_config)
+    central_server = Server(model_config, global_config, data_config, init_config, fed_config, optim_config, eval_config)
     
     if global_config["evaluate"]:
         central_server.evaluate_global_model(task=eval_config["eval_task"], model_path=eval_config["model_path"], listfilename=eval_config["listfilename"], testfile_path=eval_config["testfile_path"])
