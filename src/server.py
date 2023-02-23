@@ -83,6 +83,8 @@ class Server(object):
 
         self.criterion = fed_config["criterion"]
         self.optimizer = fed_config["optimizer"]
+        self.fed_config = fed_config
+
         self.optim_config = optim_config
         
         self.multi_dataset_files = data_config["multi_dataset_files"]
@@ -287,7 +289,11 @@ class Server(object):
 
         selected_total_size = 0
         for idx in tqdm(sampled_client_indices, leave=False):
-            self.clients[idx].client_update()
+            if self.fed_config["freeze_backbone"]:
+                self.clients[idx].client_update(optimize_full=False)
+            else:
+                self.clients[idx].client_update()
+            
             selected_total_size += len(self.clients[idx])
 
         message = f"[Round: {str(self._round).zfill(4)}] ...{len(sampled_client_indices)} clients are selected and updated (with total sample size: {str(selected_total_size)})!"
@@ -429,6 +435,15 @@ class Server(object):
         # average each updated model parameters of the selected clients and update the global model
         # self.average_model(sampled_client_indices, mixing_coefficients)
         self.average_model_speaker(sampled_client_indices, mixing_coefficients)
+    
+    def train_nonfederated_model_speaker(self):
+        """Do federated training."""
+
+        # select pre-defined fraction of clients randomly
+        sampled_client_indices = self.sample_clients()
+
+        # updated selected clients with local dataset
+        _ = self.update_selected_clients_speaker(sampled_client_indices)
         
     # def evaluate_global_model(self):
     #     """Evaluate the global model using the global holdout dataset (self.data)."""
@@ -603,10 +618,20 @@ class Server(object):
     def groupevaluate_global_model(self, task, group_listfilenames, testfile_path):
         if task == 'ver':
             for group_id, listfilename in enumerate(group_listfilenames):
-                if self.model_config["use_additional_model"][1] == False:
-                    self.evaluateFromList(self.model, listfilename, test_path=testfile_path, group_id=group_id)
-                else:
+                if self.fed_config["non_fed_split_training"] == True:
                     self.evaluateFromList(self.clients[group_id].model, listfilename, test_path=testfile_path, group_id=group_id)
+                    continue
+
+                if self.fed_config["centerized_training"] == True:
+                    self.evaluateFromList(self.clients[0].model, listfilename, test_path=testfile_path, group_id=group_id)
+                    continue
+
+                if self.model_config["use_additional_model"][1] == True:
+                    self.evaluateFromList(self.clients[group_id].model, listfilename, test_path=testfile_path, group_id=group_id)
+                    continue
+
+                self.evaluateFromList(self.model, listfilename, test_path=testfile_path, group_id=group_id)
+                    
         else:
             raise ValueError('Unknown task: %s'%(task))
 
@@ -648,17 +673,20 @@ class Server(object):
         # self.results = {"loss": [], "accuracy": []}
         # init speaker model with existing parameters
         self.loadParameters(self.model, self.speaker_init_model)
+        self.transmit_model_onlyparam()
 
         self.groupevaluate_global_model(self.task, self.group_listfilenames, self.testfile_path)
         
         for r in range(self.num_rounds):
             self._round = r + 1
             
-            self.train_federated_model_speaker()
+            if self.fed_config["non_fed_split_training"] or self.fed_config["centerized_training"]:
+                self.train_nonfederated_model_speaker()
+            else:
+                self.train_federated_model_speaker()
 
             # evaluate model
-            if self._round % self.eval_interval == 0:
-               
+            if self._round % self.eval_interval == 0:               
                 self.groupevaluate_global_model(self.task, self.group_listfilenames, self.testfile_path)
 
 

@@ -33,9 +33,14 @@ if __name__ == "__main__":
     os.environ["CUDA_VISIBLE_DEVICES"] = global_config["use_GPU"]
 
     # modify dataset path for FL
-    data_config["multi_dataset_files"] = [os.path.join(data_config["fl_dataset_path"],
-        "train_list_G%d.txt"%(i+1)) for i in range(fed_config["K"])]
-    data_config["multi_train_paths"] = [''] * fed_config["K"]
+    if fed_config["centerized_training"]:
+        print('centeralized training')
+        data_config["multi_dataset_files"] = [os.path.join(data_config["fl_dataset_path"], "train_list_G1-12.txt")]
+        data_config["multi_train_paths"] = ['']
+    else:
+        data_config["multi_dataset_files"] = [os.path.join(data_config["fl_dataset_path"],
+            "train_list_G%d.txt"%(i+1)) for i in range(fed_config["K"])]
+        data_config["multi_train_paths"] = [''] * fed_config["K"]
 
     # setup group evaluation
     eval_config["group_listfilenames"] = [os.path.join(data_config["fl_dataset_path"], "ver_list_G%d_VER.txt"%(i+1)) for i in range(eval_config["group_size"]//2)] + \

@@ -3,8 +3,8 @@ global_config:
   device: "cuda"
   is_mp: False
   "evaluate": False
-  "use_GPU": "2"
-  "notes": "PFL test compact testing"
+  "use_GPU": "6"
+  "notes": "centerized training"
   "tags": ["experimental"]
 ---
 data_config:
@@ -17,12 +17,15 @@ data_config:
 ---
 fed_config:
   C: 1.0
-  K: 12
-  R: 30
+  K: 1
+  R: 100
   E: 1
   B: 10
   criterion: torch.nn.CrossEntropyLoss
   optimizer: torch.optim.SGD
+  non_fed_split_training: False
+  centerized_training: True
+  freeze_backbone: False
 ---
 optim_config:
   lr: 0.01
@@ -45,7 +48,7 @@ model_config:
   hidden_channels: 32
   num_hiddens: 512
   num_classes: 10
-  use_additional_model: [True, True] # [use additional model, use additional model output embedding]
+  use_additional_model: [True, False] # [use additional model, use additional model output embedding]
 ---
 log_config:
   log_path: "../FL_log/"

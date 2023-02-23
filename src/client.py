@@ -75,13 +75,17 @@ class Client(object):
         max_seg_per_spk=100, nDataLoaderThread=8, nPerSpeaker=1, 
         train_path=self.train_path, sox_aug=False)
 
-    def client_update(self):
+    def client_update(self, optimize_full=True):
         """Update local model using local dataset."""
         self.model.train()
         self.model.to(self.device)
 
         # optimizer = eval(self.optimizer)(self.model.parameters(), **self.optim_config)
-        optimizer = torch.optim.SGD(self.model.parameters(), lr = 1e-2, momentum = 0.9, weight_decay=5e-4)
+        if optimize_full:
+            optimizer = torch.optim.SGD(self.model.parameters(), lr = 1e-2, momentum = 0.9, weight_decay=5e-4)
+        else:
+            optimizer = torch.optim.SGD(self.model.__L__.parameters(), lr = 1e-2, momentum = 0.9, weight_decay=5e-4)
+        
         for e in range(self.local_epoch):
             loss_total = 0
             counter = 0
