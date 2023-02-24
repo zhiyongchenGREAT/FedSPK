@@ -74,6 +74,15 @@ class Client(object):
         rir_path='/nvme/zhiyong/RIRS_NOISES/simulated_rirs', max_frames=300, 
         max_seg_per_spk=100, nDataLoaderThread=8, nPerSpeaker=1, 
         train_path=self.train_path, sox_aug=False)
+    
+    def reset_client_dataset(self, stage):
+        self.dataset_file = self.dataset_file.split('.')[-2] + '_' + str(stage) + '.txt'
+
+        self.dataloader = get_data_loader_speaker(self.id*100, dataset_file_name=self.dataset_file, 
+        batch_size=128, augment=False, musan_path='/nvme/zhiyong/musan_split', 
+        rir_path='/nvme/zhiyong/RIRS_NOISES/simulated_rirs', max_frames=300, 
+        max_seg_per_spk=100, nDataLoaderThread=8, nPerSpeaker=1, 
+        train_path=self.train_path, sox_aug=False)
 
     def client_update(self, optimize_full=True):
         """Update local model using local dataset."""

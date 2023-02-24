@@ -55,7 +55,7 @@ class Server(object):
         optim_config: Kwargs provided for optimizer.
     """
     def __init__(self, model_config={}, global_config={}, data_config={}, init_config={}, fed_config={}, optim_config={}, eval_config={}):
-        self.clients = None
+        # self.clients = None
         self._round = 0
         # self.writer = writer
 
@@ -96,6 +96,9 @@ class Server(object):
         self.group_listfilenames = eval_config["group_listfilenames"]
         self.testfile_path = eval_config["testfile_path"]
         self.eval_interval = eval_config["eval_interval"]
+
+        if self.fed_config["continue_learning_setting"][0] == True:
+            self.cl_stage = 1
 
     def setup(self, **init_kwargs):
         """Set up all configuration for federated learning."""
@@ -685,10 +688,26 @@ class Server(object):
             else:
                 self.train_federated_model_speaker()
 
+            wandb.log({'round': self._round})
+
             # evaluate model
             if self._round % self.eval_interval == 0:               
                 self.groupevaluate_global_model(self.task, self.group_listfilenames, self.testfile_path)
 
+            if self.fed_config["continue_learning_setting"][0] == True:
+                
+                wandb.log({'continue_learning_stage': self.cl_stage})
+
+                if self._round % self.fed_config["continue_learning_setting"][2] == 0:
+
+                    self.cl_stage = self.cl_stage+1
+
+                    if self.cl_stage <= self.fed_config["continue_learning_setting"][1]:
+                        for i in range(len(self.clients)//2):
+                            self.clients[i].reset_client_dataset(self.cl_stage)
+                    else:
+                        pass
+                    
 
             # test_loss, test_accuracy = self.evaluate_global_model()
             
@@ -713,3 +732,4 @@ class Server(object):
             # print(message); logging.info(message)
             # del message; gc.collect()
         self.transmit_model_onlyparam()
+
