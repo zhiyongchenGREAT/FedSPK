@@ -489,14 +489,14 @@ class Server(object):
             self_state[name].copy_(param)       
 
 
-
+    # load parameters from amsoftmax pretraining x_vector model
     def loadParameters(self, model, path, map_location="cuda:0"):
 
         self_state = model.state_dict()
         loaded_state = torch.load(path, map_location=map_location)
 
         for name, param in loaded_state['model'].items():
-            if '__L__' in name:
+            if '__L__.W' in name:
                 continue
             
             origname = name

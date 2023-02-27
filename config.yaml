@@ -3,8 +3,8 @@ global_config:
   device: "cuda"
   is_mp: False
   "evaluate": False
-  "use_GPU": "1"
-  "notes": "CL-FL std-FL training"
+  "use_GPU": "6"
+  "notes": "CL-FL std-FL training, optimize the CL label settings(retrain)"
   "tags": ["experimental"]
 ---
 data_config:
@@ -36,7 +36,7 @@ init_config:
   init_type: "xavier"
   init_gain: 1.0
   gpu_ids: [0, 1, 2]
-  "speaker_init_model": "/nvme1/zhiyong/ASV_LOGS_202102/train_logs_201120/xvector(vox2)/model/model000000134.model"
+  "speaker_init_model": "/workspace/train_logs/X_vector_trans/model/model000000134.model"
 ---
 model_config: 
   #name: TwoNN
