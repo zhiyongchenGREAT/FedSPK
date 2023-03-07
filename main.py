@@ -83,11 +83,12 @@ if __name__ == "__main__":
         tags=global_config["tags"],        
         # track hyperparameters and run metadata
         config=configs_wandb,
-        dir='/nvme/zhiyong/wandb'
+        dir='/nvme/zhiyong/wandb',
+        mode="offline"
     )
 
     # initialize federated learning 
-    central_server = Server(model_config, global_config, data_config, init_config, fed_config, optim_config, eval_config)
+    central_server = Server(model_config, global_config, data_config, init_config, fed_config, optim_config, eval_config, log_config)
     
     if global_config["evaluate"]:
         central_server.evaluate_global_model(task=eval_config["eval_task"], model_path=eval_config["model_path"], listfilename=eval_config["listfilename"], testfile_path=eval_config["testfile_path"])

@@ -54,7 +54,7 @@ class Server(object):
         optimizer: torch.optim instance for updating parameters.
         optim_config: Kwargs provided for optimizer.
     """
-    def __init__(self, model_config={}, global_config={}, data_config={}, init_config={}, fed_config={}, optim_config={}, eval_config={}):
+    def __init__(self, model_config={}, global_config={}, data_config={}, init_config={}, fed_config={}, optim_config={}, eval_config={}, log_config={}):
         # self.clients = None
         self._round = 0
         # self.writer = writer
@@ -96,6 +96,9 @@ class Server(object):
         self.group_listfilenames = eval_config["group_listfilenames"]
         self.testfile_path = eval_config["testfile_path"]
         self.eval_interval = eval_config["eval_interval"]
+
+        self.log_config = log_config
+        self.global_config = global_config
 
         if self.fed_config["continue_learning_setting"][0] == True:
             self.cl_stage = 1
@@ -514,6 +517,13 @@ class Server(object):
 
             self_state[name].copy_(param)
 
+    def saveParameters(self, model, path, artifact_name):
+        torch.save(model.state_dict(), path)
+        artifact = wandb.Artifact(name=artifact_name, type='model')
+        # Add a file to the artifact's contents
+        artifact.add_file(local_path=path)
+
+
     def evaluateFromList(self, model, listfilename, distance_m='cosine', print_interval=100, test_path='', num_eval=10, eval_frames=0, verbose=True, group_id=99):
         assert distance_m in ['L2', 'cosine']
         if verbose:
@@ -609,7 +619,7 @@ class Server(object):
         result = tuneThresholdfromScore_std(all_scores, all_labels)
         print('')
         print('EER %2.4f MINC@0.01 %.5f MINC@0.001 %.5f'%(result[1], result[-2], result[-1]))
-        wandb.log({'G%dEER'%(group_id+1): result[1], 'G%dMINC@0.01'%(group_id+1): result[-2]})
+        wandb.log({'G%dEER'%(group_id+1): result[1], 'G%dMINC@0.01'%(group_id+1): result[-2], 'Round': self._round})
 
     def evaluate_global_model(self, task, model_path, listfilename, testfile_path):
         if task == 'ver':
@@ -688,15 +698,12 @@ class Server(object):
             else:
                 self.train_federated_model_speaker()
 
-            wandb.log({'round': self._round})
-
             # evaluate model
             if self._round % self.eval_interval == 0:               
                 self.groupevaluate_global_model(self.task, self.group_listfilenames, self.testfile_path)
 
             if self.fed_config["continue_learning_setting"][0] == True:
                 
-                wandb.log({'continue_learning_stage': self.cl_stage})
 
                 if self._round % self.fed_config["continue_learning_setting"][2] == 0:
 
@@ -732,4 +739,6 @@ class Server(object):
             # print(message); logging.info(message)
             # del message; gc.collect()
         self.transmit_model_onlyparam()
+        save_path = os.path.join(self.log_config["log_path"], self.global_config["notes"]+'.pth')
+        self.saveParameters(self.model, save_path, "Artifact"+str(random.random()))
 

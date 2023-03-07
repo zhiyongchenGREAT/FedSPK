@@ -31,6 +31,7 @@ class Client(object):
         self.id = client_id
         self.data = local_data
         self.device = device
+        self.step_count = 0
         self.__model = None
 
     @property
@@ -115,8 +116,9 @@ class Client(object):
                 counter += 1
                 sys.stdout.write("Loss %f \r"%(loss_total/counter))
                 sys.stdout.flush()
+                self.step_count += 1
 
-                wandb.log({"C%dloss"%(self.id+1): loss})
+                wandb.log({"C%dloss"%(self.id+1): loss, "Step": self.step_count})
 
                 if self.device == "cuda": torch.cuda.empty_cache()
 

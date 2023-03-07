@@ -4,8 +4,8 @@ global_config:
   is_mp: False
   "evaluate": False
   "use_GPU": "4"
-  "notes": "std_FL test compact testing, canoical(no additional model)"
-  "tags": ["experimental"]
+  "notes": "STD: std_FL test compact testing, canoical"
+  "tags": ["STD"]
 ---
 data_config:
   # data_path: "./data/"
@@ -49,10 +49,10 @@ model_config:
   hidden_channels: 32
   num_hiddens: 512
   num_classes: 10
-  use_additional_model: [False, False] # [use additional model, use additional model output embedding]
+  use_additional_model: [True, False] # [use additional model, use additional model output embedding]
 ---
 log_config:
-  log_path: "../FL_log/"
+  log_path: "/workspace/FL_log"
   log_name:  "FL.log"
   tb_port: 5252
   tb_host: "0.0.0.0"
