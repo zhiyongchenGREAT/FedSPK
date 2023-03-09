@@ -76,8 +76,10 @@ class Client(object):
         max_seg_per_spk=100, nDataLoaderThread=8, nPerSpeaker=1, 
         train_path=self.train_path, sox_aug=False)
     
-    def reset_client_dataset(self, stage):
-        self.dataset_file = self.dataset_file.split('.')[-2] + '_' + str(stage) + '.txt'
+    def reset_client_dataset(self, stage, stagename_dict):
+        stagename = stagename_dict[stage]
+
+        self.dataset_file = self.dataset_file.split(str(self.id+1))[-2] + stagename
 
         self.dataloader = get_data_loader_speaker(1200*(stage-1)+self.id*100, dataset_file_name=self.dataset_file, 
         batch_size=128, augment=False, musan_path='/nvme/zhiyong/musan_split', 

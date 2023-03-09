@@ -3,8 +3,8 @@ global_config:
   device: "cuda"
   is_mp: False
   "evaluate": False
-  "use_GPU": "4"
-  "notes": "STD: std_FL test compact testing, canoical"
+  "use_GPU": "6"
+  "notes": "STD: CL-FL std-FL training, optimize the CL label settings(retrain with transformer pretrained init model)."
   "tags": ["STD"]
 ---
 data_config:
@@ -18,7 +18,7 @@ data_config:
 fed_config:
   C: 1.0
   K: 12
-  R: 30
+  R: 100
   E: 1
   B: 10
   criterion: torch.nn.CrossEntropyLoss
@@ -26,7 +26,8 @@ fed_config:
   non_fed_split_training: False
   centerized_training: False
   freeze_backbone: False
-  continue_learning_setting: [False, 3, 30] # [continue learning, continue learning total stages, continue learning change interval]
+  continue_learning_setting: [True, 3, 30] # [continue learning, continue learning total stages, continue learning change interval]
+  stagename_dict: {2: "#3.txt", 3: "#2.txt"}
 ---
 optim_config:
   lr: 0.01
@@ -36,7 +37,7 @@ init_config:
   init_type: "xavier"
   init_gain: 1.0
   gpu_ids: [0, 1, 2]
-  "speaker_init_model": "/nvme1/zhiyong/ASV_LOGS_202102/train_logs_201120/xvector(vox2)/model/model000000134.model"
+  "speaker_init_model": "/workspace/train_logs/X_vector_trans/model/model000000134.model"
 ---
 model_config: 
   #name: TwoNN

@@ -54,7 +54,7 @@ class Server(object):
         optimizer: torch.optim instance for updating parameters.
         optim_config: Kwargs provided for optimizer.
     """
-    def __init__(self, model_config={}, global_config={}, data_config={}, init_config={}, fed_config={}, optim_config={}, eval_config={}, log_config={}):
+    def __init__(self, model_config={}, global_config={}, data_config={}, init_config={}, fed_config={}, optim_config={}, eval_config={}, log_config={}, wandb_run=None):
         # self.clients = None
         self._round = 0
         # self.writer = writer
@@ -102,6 +102,9 @@ class Server(object):
 
         if self.fed_config["continue_learning_setting"][0] == True:
             self.cl_stage = 1
+
+
+        self.run = wandb_run
 
     def setup(self, **init_kwargs):
         """Set up all configuration for federated learning."""
@@ -429,6 +432,10 @@ class Server(object):
         # select pre-defined fraction of clients randomly
         sampled_client_indices = self.sample_clients()
 
+        # log sampled client indices with wandb
+        wandb.log({"sampled_client_indices": sampled_client_indices, "round": self._round})
+
+
         # send global model to the selected clients
         self.transmit_model_onlyparam(sampled_client_indices)
 
@@ -522,6 +529,8 @@ class Server(object):
         artifact = wandb.Artifact(name=artifact_name, type='model')
         # Add a file to the artifact's contents
         artifact.add_file(local_path=path)
+
+        self.run.log_artifact(artifact)
 
 
     def evaluateFromList(self, model, listfilename, distance_m='cosine', print_interval=100, test_path='', num_eval=10, eval_frames=0, verbose=True, group_id=99):
@@ -711,7 +720,9 @@ class Server(object):
 
                     if self.cl_stage <= self.fed_config["continue_learning_setting"][1]:
                         for i in range(len(self.clients)//2):
-                            self.clients[i].reset_client_dataset(self.cl_stage)
+                            self.clients[i].reset_client_dataset(self.cl_stage, self.fed_config["stagename_dict"])
+                        save_path = os.path.join(self.log_config["log_path"], self.global_config["notes"]+'S1F.pth')
+                        self.saveParameters(self.model, save_path, "ArtifactS1F"+str(random.random()))
                     else:
                         pass
                     
