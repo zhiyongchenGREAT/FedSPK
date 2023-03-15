@@ -4,9 +4,12 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import time, pdb, numpy
+import time
+import pdb
+import numpy
 from torch.nn import TransformerEncoder, TransformerEncoderLayer
 # from utils import accuracy
+
 
 def accuracy(output, target, topk=(1,)):
     """Computes the precision@k for the specified values of k"""
@@ -23,38 +26,47 @@ def accuracy(output, target, topk=(1,)):
         res.append(correct_k.mul_(100.0 / batch_size))
     return res
 
+
 class LossFunction(nn.Module):
-	def __init__(self, nOut, nClasses, **kwargs):
-		
-		super(LossFunction, self).__init__()
-		self.test_normalize = True
-	    
-		self.criterion  = torch.nn.CrossEntropyLoss()
-		self.fc 		= nn.Linear(nOut,nClasses)
+    def __init__(self, nOut, nClasses, **kwargs):
 
-		print('Initialised Softmax Loss')
-		
-	def forward(self, x, label=None):
-		x 		= self.fc(x)
-		nloss   = self.criterion(x, label)
-		prec1	= accuracy(x.detach(), label.detach(), topk=(1,))[0]
+        super(LossFunction, self).__init__()
+        self.test_normalize = True
 
-		return nloss, prec1
+        self.criterion = torch.nn.CrossEntropyLoss()
+        self.fc = nn.Linear(nOut, nClasses)
+
+        print('Initialised Softmax Loss')
+
+    def forward(self, x, label=None, ID_task_infer=None):
+        x = self.fc(x)
+        nloss = self.criterion(x, label)
+        prec1 = accuracy(x.detach(), label.detach(), topk=(1,))[0]
+
+        if ID_task_infer is not None:
+            softmax_x_output = F.softmax(x, dim=1)
+
+            return softmax_x_output
+
+        return nloss, prec1
+
 
 class LossFunction_with_transformer(nn.Module):
     def __init__(self, nOut, nClasses, **kwargs):
-        
+
         super(LossFunction_with_transformer, self).__init__()
         self.test_normalize = True
-        
-        self.criterion  = torch.nn.CrossEntropyLoss()
-        self.fc 		= nn.Linear(nOut,nClasses)
 
-        self.encoder_layers = TransformerEncoderLayer(d_model=192, nhead=2, dim_feedforward=192, batch_first=True)
-        self.transformer_encoder = TransformerEncoder(self.encoder_layers, num_layers=2)
+        self.criterion = torch.nn.CrossEntropyLoss()
+        self.fc = nn.Linear(nOut, nClasses)
+
+        self.encoder_layers = TransformerEncoderLayer(
+            d_model=192, nhead=2, dim_feedforward=192, batch_first=True)
+        self.transformer_encoder = TransformerEncoder(
+            self.encoder_layers, num_layers=2)
 
         print('Initialised Softmax Loss')
-        
+
     def forward(self, x, label=None):
 
         trans_out = self.transformer_encoder(x)
@@ -63,8 +75,8 @@ class LossFunction_with_transformer(nn.Module):
             return trans_out
 
         x = self.fc(trans_out)
-        
-        nloss  = self.criterion(x, label)
-        prec1	= accuracy(x.detach(), label.detach(), topk=(1,))[0]
+
+        nloss = self.criterion(x, label)
+        prec1 = accuracy(x.detach(), label.detach(), topk=(1,))[0]
 
         return nloss, prec1

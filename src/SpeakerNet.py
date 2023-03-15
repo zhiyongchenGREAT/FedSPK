@@ -28,12 +28,13 @@ class WrappedModel(nn.Module):
 class SpeakerNet(nn.Module):
 
     def __init__(self, model, trainfunc, nPerSpeaker, Syncbatch, n_mels, nOut, spec_aug, 
-                nClasses, additional_model, **kwargs):
+                nClasses, additional_model, ID_task=None, **kwargs):
         super(SpeakerNet, self).__init__()
 
         # SpeakerNetModel = importlib.import_module(model).__getattribute__('MainModel')
         self.__S__ = MainModel(n_mels, nOut, spec_aug, **kwargs)
         self.additional_model = additional_model
+        self.ID_task = ID_task
 
 
         # LossFunction = importlib.import_module(trainfunc).__getattribute__('LossFunction')
@@ -41,6 +42,9 @@ class SpeakerNet(nn.Module):
             self.__L__ = LossFunction_with_transformer(nOut, nClasses, **kwargs)
         else:
             self.__L__ = LossFunction(nOut, nClasses, **kwargs)
+
+        if ID_task is not None:
+            self.__L__ = LossFunction(nOut, self.ID_task, **kwargs)
 
 
         self.nPerSpeaker = nPerSpeaker
@@ -50,7 +54,14 @@ class SpeakerNet(nn.Module):
         data    = data.reshape(-1,data.size()[-1]).cuda()
         outp    = self.__S__.forward(data)
 
+        if self.ID_task is not None:
+        # ID_task infer
+            if label == None:
+                outp = self.__L__.forward(outp, ID_task_infer=self.ID_task)
+                return outp
+
         if label == None:
+        # standard infer
             if self.additional_model[0]:
                 if self.additional_model[1]:
                     outp  = outp.reshape(self.nPerSpeaker,-1,outp.size()[-1]).transpose(1,0).squeeze(1)
@@ -58,6 +69,7 @@ class SpeakerNet(nn.Module):
             return outp
 
         else:
+        # standard training
             outp    = outp.reshape(self.nPerSpeaker,-1,outp.size()[-1]).transpose(1,0).squeeze(1)
 
             nloss, prec1 = self.__L__.forward(outp, label)
