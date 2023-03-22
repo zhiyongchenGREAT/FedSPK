@@ -38,15 +38,15 @@ class LossFunction(nn.Module):
 
         print('Initialised Softmax Loss')
 
-    def forward(self, x, label=None, ID_task_infer=None):
+    def forward(self, x, label=None, ID_task_infer=False):
         x = self.fc(x)
+
+        if ID_task_infer is True:
+            softmax_x_output = F.softmax(x, dim=1)
+            return softmax_x_output
+
         nloss = self.criterion(x, label)
         prec1 = accuracy(x.detach(), label.detach(), topk=(1,))[0]
-
-        if ID_task_infer is not None:
-            softmax_x_output = F.softmax(x, dim=1)
-
-            return softmax_x_output
 
         return nloss, prec1
 

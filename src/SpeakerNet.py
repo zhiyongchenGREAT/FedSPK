@@ -44,7 +44,7 @@ class SpeakerNet(nn.Module):
             self.__L__ = LossFunction(nOut, nClasses, **kwargs)
 
         if ID_task is not None:
-            self.__L__ = LossFunction(nOut, self.ID_task, **kwargs)
+            self.__L__ID = LossFunction(nOut, self.ID_task, **kwargs)
 
 
         self.nPerSpeaker = nPerSpeaker
@@ -57,8 +57,13 @@ class SpeakerNet(nn.Module):
         if self.ID_task is not None:
         # ID_task infer
             if label == None:
-                outp = self.__L__.forward(outp, ID_task_infer=self.ID_task)
+                outp = self.__L__ID.forward(outp, ID_task_infer=True)
                 return outp
+            else:
+        # standard training for ID_task
+                outp    = outp.reshape(self.nPerSpeaker,-1,outp.size()[-1]).transpose(1,0).squeeze(1)
+                nloss, prec1 = self.__L__ID.forward(outp, label)
+                return nloss, prec1
 
         if label == None:
         # standard infer
@@ -71,7 +76,6 @@ class SpeakerNet(nn.Module):
         else:
         # standard training
             outp    = outp.reshape(self.nPerSpeaker,-1,outp.size()[-1]).transpose(1,0).squeeze(1)
-
             nloss, prec1 = self.__L__.forward(outp, label)
 
             return nloss, prec1
