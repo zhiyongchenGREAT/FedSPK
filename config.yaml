@@ -3,9 +3,9 @@ global_config:
   device: "cuda"
   is_mp: False
   "evaluate": False
-  "use_GPU": "6"
-  "notes": "STD: CL-FL std-FL training, optimize the CL label settings(retrain with transformer pretrained init model)."
-  "tags": ["STD"]
+  "use_GPU": "7"
+  "notes": "TEST:HPFL init for test for CNGroup (very basic)."
+  "tags": ["FL2:TEST"]
 ---
 data_config:
   # data_path: "./data/"
@@ -17,7 +17,7 @@ data_config:
 ---
 fed_config:
   C: 1.0
-  K: 12
+  K: 6
   R: 100
   E: 1
   B: 10
@@ -26,7 +26,7 @@ fed_config:
   non_fed_split_training: False
   centerized_training: False
   freeze_backbone: False
-  continue_learning_setting: [True, 3, 30] # [continue learning, continue learning total stages, continue learning change interval]
+  continue_learning_setting: [False, 3, 30] # [continue learning, continue learning total stages, continue learning change interval]
   stagename_dict: {2: "#3.txt", 3: "#2.txt"}
 ---
 optim_config:
