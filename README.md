@@ -1,6 +1,6 @@
 # FedSPK: Speaker Recognition with Federated Learning
 
-This repository contains the implementation of **Learning Domain-Heterogeneous Speaker Recognition Systems with Personalized Continual Federated Learning**. The project aims to develop a speaker recognition system that leverages federated learning to handle domain heterogeneity and provides personalized continual learning for robust and adaptive performance.
+This repository contains the implementation of our paper **Learning Domain-Heterogeneous Speaker Recognition Systems with Personalized Continual Federated Learning**. The project aims to develop a speaker recognition system that leverages federated learning to handle domain heterogeneity and provides personalized continual learning for robust and adaptive performance.
 
 ## Table of Contents
 - [Overview](#overview)
@@ -45,7 +45,8 @@ This project is licensed under the MIT License. See the LICENSE file for more de
 ## Acknowledgments
 We would like to acknowledge and thank the authors of our paper *Learning Domain-Heterogeneous Speaker Recognition Systems with Personalized Continual Federated Learning*. If you reference or build upon this work, please cite our original paper as follows:
 
+```bash
 @article{chen2023domainheterogeneous, title={Learning domain-heterogeneous speaker recognition systems with personalized continual federated learning}, author={Chen, Zhiyong and Xu, Shugong}, journal={EURASIP Journal on Audio, Speech, and Music Processing}, volume={2023}, number={1}, pages={33}, year={2023}, publisher={Springer} }
-
+```
 
 
